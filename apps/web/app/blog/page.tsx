@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowRight } from "lucide-react";
 import { Navigation } from "@/components/navigation";
 import { Footer } from "@/components/footer";
@@ -12,6 +13,7 @@ const posts = [
     date: "Mar 10, 2025",
     readTime: "4 min read",
     size: "large",
+    image: "/images/blog/blog-seed-round.png",
     imagePrompt: "A vibrant, minimalist illustration of interconnected nodes and networks glowing with purpose-driven energy. Features collaborative figures working together across digital bridges, symbolizing global coordination and humanitarian impact. Clean modern aesthetic with warm accent colors representing growth and connection.",
   },
   {
@@ -22,6 +24,7 @@ const posts = [
     date: "Feb 24, 2025",
     readTime: "8 min read",
     size: "small",
+    image: "/images/blog/blog-matching-guide.png",
     imagePrompt: "A structured, educational visual showing a flowchart or roadmap with diverse volunteers connecting to opportunities. Clean iconography representing skills, matching, and growth. Organized, guide-like aesthetic with clear visual hierarchy and helpful design patterns.",
   },
   {
@@ -32,6 +35,7 @@ const posts = [
     date: "Feb 10, 2025",
     readTime: "5 min read",
     size: "small",
+    image: "/images/blog/blog-ai-ngos.png",
     imagePrompt: "Futuristic but warm illustration of AI-powered systems orchestrating volunteer coordination. Features neural networks, data flows, and human figures working with intelligent systems. Modern tech aesthetic balanced with humanity and purpose. Emphasizes scale, efficiency, and smart resource allocation.",
   },
   {
@@ -42,6 +46,7 @@ const posts = [
     date: "Jan 28, 2025",
     readTime: "6 min read",
     size: "medium",
+    image: "/images/blog/blog-impact-metrics.png",
     imagePrompt: "An informative visualization showing impact metrics, dashboards, and measurement tools in action. Includes graphs, analytics, and real-world outcomes being tracked. Beginner-friendly visual language with clear data representations. Emphasizes clarity, measurement, and tangible results.",
   },
   {
@@ -52,6 +57,7 @@ const posts = [
     date: "Jan 15, 2025",
     readTime: "4 min read",
     size: "medium",
+    image: "/images/blog/blog-volunteer-retention.png",
     imagePrompt: "A warm, community-focused illustration showing long-term relationships and trust building between organizations and volunteers. Depicts retention, growth, and lasting commitment through visual metaphors like roots, foundations, or continuous journeys. Emphasizes community, trust, and sustainable engagement.",
   },
 ];
@@ -63,7 +69,15 @@ function BlogCard({ post }: { post: typeof posts[0] }) {
       className="group flex flex-col gap-4 bg-white border border-grey-3 rounded-2xl overflow-hidden hover:border-grey-2 transition-colors"
       title={`Image prompt: ${post.imagePrompt}`}
     >
-      <div className="w-full aspect-video bg-grey-4" title={`Generated from: ${post.imagePrompt}`} />
+      <div className="w-full aspect-video bg-grey-4 relative overflow-hidden">
+        <Image
+          src={post.image}
+          alt={post.title}
+          fill
+          className="object-cover group-hover:scale-105 transition-transform duration-500"
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+        />
+      </div>
       <div className="flex flex-col gap-3 p-5 pb-6">
         <span className="text-[10px] font-medium uppercase tracking-widest text-grey-1 bg-grey-4 px-2 py-1 rounded-full w-fit">
           {post.tag}
@@ -71,7 +85,7 @@ function BlogCard({ post }: { post: typeof posts[0] }) {
         <h3 className="text-base font-medium text-black leading-snug group-hover:text-grey-1 transition-colors">
           {post.title}
         </h3>
-        <p className="text-sm text-grey-1 leading-relaxed">{post.excerpt}</p>
+        <p className="text-sm text-grey-1 leading-relaxed line-clamp-2">{post.excerpt}</p>
         <div className="flex items-center gap-2 text-xs text-grey-2 mt-1">
           <span>{post.date}</span>
           <span>·</span>
@@ -106,7 +120,16 @@ export default function BlogPage() {
              className="group flex flex-col md:flex-row gap-8 bg-white border border-grey-3 rounded-2xl overflow-hidden hover:border-grey-2 transition-colors"
              title={`Image prompt: ${featured.imagePrompt}`}
            >
-             <div className="md:w-1/2 aspect-video md:aspect-auto bg-grey-4 min-h-[240px]" title={`Generated from: ${featured.imagePrompt}`} />
+             <div className="md:w-1/2 aspect-video md:aspect-auto bg-grey-4 min-h-[240px] relative overflow-hidden">
+               <Image
+                 src={featured.image}
+                 alt={featured.title}
+                 fill
+                 className="object-cover group-hover:scale-105 transition-transform duration-500"
+                 sizes="(max-width: 768px) 100vw, 50vw"
+                 priority
+               />
+             </div>
             <div className="flex flex-col justify-center gap-4 p-8">
               <span className="text-[10px] font-medium uppercase tracking-widest text-grey-1 bg-grey-4 px-2 py-1 rounded-full w-fit">
                 {featured.tag}
