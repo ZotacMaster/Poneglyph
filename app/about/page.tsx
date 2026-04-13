@@ -1,12 +1,13 @@
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowRight, Linkedin, Mail } from "lucide-react";
 
 const team = [
-  { name: "Amara Osei", role: "Founder & CEO", linkedin: "https://linkedin.com", email: "mailto:hello@poneglyph.io", initials: "AO" },
-  { name: "Priya Sharma", role: "Co-founder & CTO", linkedin: "https://linkedin.com", email: "mailto:hello@poneglyph.io", initials: "PS" },
-  { name: "Lucas Mendes", role: "Head of Product", linkedin: "https://linkedin.com", initials: "LM" },
-  { name: "Fatima Al-Rashid", role: "Head of AI Research", linkedin: "https://linkedin.com", email: "mailto:hello@poneglyph.io", initials: "FA" },
-  { name: "James Okonkwo", role: "Founding Engineer", email: "mailto:hello@poneglyph.io", initials: "JO" },
+  { name: "Amara Osei", role: "Founder & CEO", linkedin: "https://linkedin.com", email: "mailto:hello@poneglyph.io", initials: "AO", image: "avatar-amara.png" },
+  { name: "Priya Sharma", role: "Co-founder & CTO", linkedin: "https://linkedin.com", email: "mailto:hello@poneglyph.io", initials: "PS", image: "avatar-priya.png" },
+  { name: "Lucas Mendes", role: "Head of Product", linkedin: "https://linkedin.com", initials: "LM", image: "avatar-lucas.png" },
+  { name: "Fatima Al-Rashid", role: "Head of AI Research", linkedin: "https://linkedin.com", email: "mailto:hello@poneglyph.io", initials: "FA", image: "avatar-fatima.png" },
+  { name: "James Okonkwo", role: "Founding Engineer", linkedin: "https://linkedin.com", email: "mailto:hello@poneglyph.io", initials: "JO", image: "avatar-james.png" },
 ];
 
 const partners = [
@@ -70,8 +71,13 @@ export default function AboutPage() {
             </div>
           </div>
 
-          <div className="w-full h-[520px] rounded-2xl bg-grey-3 overflow-hidden flex items-center justify-center">
-            <div className="text-grey-2 text-sm">Team photo coming soon</div>
+          <div className="w-full h-[520px] rounded-2xl overflow-hidden relative">
+            <Image
+              src="/images/team-photo.png"
+              alt="Poneglyph team"
+              fill
+              className="object-cover"
+            />
           </div>
         </div>
       </section>
@@ -87,11 +93,13 @@ export default function AboutPage() {
               &ldquo;The best resource in any crisis is a human being who knows what to do — we just need to route them correctly.&rdquo;
             </blockquote>
             <div className="flex items-center gap-3">
-              <div className="relative">
-                <div className="w-12 h-12 rounded-full bg-grey-3 flex items-center justify-center text-sm font-semibold text-grey-1">
-                  AO
-                </div>
-                <div className="absolute -bottom-0.5 -right-1 w-5 h-5 rounded-full bg-primary border-2 border-white" />
+              <div className="relative w-12 h-12 rounded-full overflow-hidden">
+                <Image
+                  src="/images/avatar-amara.png"
+                  alt="Amara Osei"
+                  fill
+                  className="object-cover"
+                />
               </div>
               <div>
                 <p className="text-sm font-medium text-black">Amara Osei</p>
@@ -99,10 +107,15 @@ export default function AboutPage() {
               </div>
             </div>
           </div>
-          <div className="flex-1 h-[400px] bg-grey-4 rounded-2xl border border-grey-3 flex items-center justify-center">
-            <div className="w-16 h-16 bg-black rounded-full flex items-center justify-center">
-              <div className="w-0 h-0 border-t-[10px] border-t-transparent border-b-[10px] border-b-transparent border-l-[18px] border-l-white ml-1" />
-            </div>
+          <div className="flex-1 h-[400px] rounded-2xl overflow-hidden relative">
+            <video
+              src="/videos/poneglyph-video.mp4"
+              autoPlay
+              muted
+              loop
+              playsInline
+              className="w-full h-full object-cover"
+            />
           </div>
         </div>
       </section>
@@ -154,8 +167,13 @@ export default function AboutPage() {
                 key={member.name}
                 className="flex flex-col gap-4 p-5 bg-white border border-grey-3 rounded-2xl hover:border-grey-2 transition-colors"
               >
-                <div className="w-full aspect-square bg-grey-4 rounded-xl flex items-center justify-center text-2xl font-semibold text-grey-1">
-                  {member.initials}
+                <div className="w-full aspect-square relative rounded-xl overflow-hidden bg-grey-4">
+                  <Image
+                    src={`/images/${member.image}`}
+                    alt={member.name}
+                    fill
+                    className="object-cover"
+                  />
                 </div>
                 <div className="flex flex-col gap-1">
                   <p className="text-sm font-medium text-black">{member.name}</p>
