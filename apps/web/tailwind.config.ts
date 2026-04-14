@@ -18,7 +18,7 @@ const config: Config = {
         blue: "#25C5FA",
       },
       fontFamily: {
-        onest: ["Onest", "sans-serif"],
+        onest: ["var(--font-onest)", "sans-serif"],
       },
       fontSize: {
         "heading-1": ["70px", { lineHeight: "1em", letterSpacing: "-0.03em" }],

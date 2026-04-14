@@ -8,7 +8,6 @@
 
 import Link from "next/link";
 import { ArrowRight, ArrowUpRight, Check } from "lucide-react";
-import { motion } from "framer-motion";
 
 /* ─────────────────────────────────────────
    Lime Highlight
@@ -278,44 +277,23 @@ export function ActivityItem({
 ───────────────────────────────────────── */
 export function HeroTag({ label, text }: { label?: string; text: string }) {
   return (
-    <motion.div
-      className="relative z-20 inline-flex items-center gap-2 border border-grey-3 rounded-full px-3 py-1 text-xs text-black bg-white overflow-hidden cursor-default"
-      initial="idle"
-      whileHover="hover"
-    >
+    <div className="group relative z-20 inline-flex items-center gap-2 border border-grey-3 rounded-full px-3 py-1 text-xs text-black bg-white overflow-hidden cursor-default">
       {/* full-pill green fill sweeping left → right */}
-      <motion.span
+      <span
         aria-hidden
-        className="absolute inset-0 bg-primary"
-        style={{ originX: 0 }}
-        variants={{
-          idle: { scaleX: 0 },
-          hover: {
-            scaleX: 1,
-            transition: { duration: 0.4, ease: [0.4, 0, 0.2, 1] },
-          },
-        }}
+        className="absolute inset-0 bg-primary origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
       />
 
       {label && (
-        <motion.span
-          className="relative z-10 text-black text-[9px] font-semibold px-1.5 py-0.5 rounded-full"
-          variants={{
-            idle: { backgroundColor: "#E3FF8F" },
-            hover: {
-              backgroundColor: "#ffffff",
-              transition: { duration: 0.25, ease: [0.4, 0, 0.2, 1] },
-            },
-          }}
-        >
+        <span className="relative z-10 text-black text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-primary group-hover:bg-white transition-colors duration-[250ms] ease-[cubic-bezier(0.4,0,0.2,1)]">
           {label}
-        </motion.span>
+        </span>
       )}
       <span className="relative z-10">{text}</span>
       <span className="relative z-10">
         <ArrowRight size={10} />
       </span>
-    </motion.div>
+    </div>
   );
 }
 
