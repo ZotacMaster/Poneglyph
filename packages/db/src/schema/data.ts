@@ -5,6 +5,7 @@ import {
   timestamp,
   boolean,
   index,
+  uniqueIndex,
   integer,
   varchar,
   uuid,
@@ -68,7 +69,7 @@ export const datasets = pgTable(
     summary: text("summary"),
 
     publicationDate: timestamp("publication_date"),
-    publisher: varchar("publisher", { length: 50 }),
+    publisher: varchar("publisher", { length: 255 }),
 
     language: varchar("language", { length: 10 }).default("en").notNull(),
 
@@ -113,6 +114,10 @@ export const datasetTags = pgTable(
   (table) => [
     index("dataset_tags_dataset_id_idx").on(table.datasetId),
     index("dataset_tags_tag_id_idx").on(table.tagId), // for fast filtering
+    uniqueIndex("dataset_tags_dataset_id_tag_id_unique").on(
+      table.datasetId,
+      table.tagId,
+    ),
   ],
 );
 
