@@ -1,9 +1,18 @@
 {
   "compilerOptions": {
+<<<<<<< HEAD
     "target": "ES2017",
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "baseUrl": ".",
+=======
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
+    "allowJs": true,
+>>>>>>> personal/main
     "skipLibCheck": true,
     "strict": true,
     "noEmit": true,
@@ -12,7 +21,10 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
+<<<<<<< HEAD
     "verbatimModuleSyntax": true,
+=======
+>>>>>>> personal/main
     "jsx": "react-jsx",
     "incremental": true,
     "plugins": [
@@ -21,9 +33,17 @@
       }
     ],
     "paths": {
+<<<<<<< HEAD
       "@/*": ["./src/*"],
       "@Poneglyph/ui/*": ["../../packages/ui/src/*"]
     }
+=======
+      "@/*": [
+        "./*"
+      ]
+    },
+    "target": "ES2017"
+>>>>>>> personal/main
   },
   "include": [
     "next-env.d.ts",
@@ -32,5 +52,11 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts"
   ],
+<<<<<<< HEAD
   "exclude": ["./node_modules"]
+=======
+  "exclude": [
+    "node_modules"
+  ]
+>>>>>>> personal/main
 }
