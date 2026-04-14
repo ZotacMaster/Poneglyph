@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ArrowRight, ArrowLeft } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { BarChart, LineChart, DonutChart } from "@/components/charts";
@@ -8,6 +8,11 @@ import type { BarDatum, LineSeries, DonutSegment } from "@/components/charts";
 
 export function IntelligenceReports() {
   const [index, setIndex] = useState(0);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
   const articles = [
     {
       title: "Global Human Trafficking Trends 2025",
@@ -55,6 +60,15 @@ export function IntelligenceReports() {
   const nextSlide = () => setIndex((prev) => (prev + 1) % articles.length);
   const prevSlide = () => setIndex((prev) => (prev - 1 + articles.length) % articles.length);
 
+  // SSR placeholder — prevents framer-motion from causing hydration mismatches
+  if (!isMounted) {
+    return (
+      <div className="w-full flex flex-col items-center justify-center py-6">
+        <div className="relative w-[90vw] md:w-[60vw] max-w-[800px] h-[380px] md:h-[320px]" />
+      </div>
+    );
+  }
+
   return (
     <div className="w-full flex flex-col items-center justify-center py-6">
       <div
@@ -84,7 +98,7 @@ export function IntelligenceReports() {
                 className="absolute inset-0 border border-grey-3 rounded-2xl bg-white overflow-hidden flex flex-col md:flex-row shadow-[0_10px_40px_-15px_rgba(0,0,0,0.15)]"
                 style={{ originX: 0, originY: 0.5, transformStyle: "preserve-3d" }}
               >
-                <div className="p-8 flex-1 flex flex-col gap-3 items-center justify-center border-b md:border-b-0 md:border-r border-grey-3 bg-grey-4/30 md:w-1/2">
+                <div className="p-8 flex-1 flex flex-col gap-3 items-center justify-center border-b md:border-b-0 md:border-r border-grey-3 bg-grey-4 md:w-1/2">
                   {article.chartType === "bar" && (
                     <div className="w-full">
                       <BarChart

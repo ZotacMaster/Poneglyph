@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev --port 3001",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "lint": "oxlint"
   },
   "dependencies": {
     "@Poneglyph/auth": "workspace:*",
@@ -26,7 +27,7 @@
     "dotenv": "catalog:",
     "framer-motion": "^12.38.0",
     "lucide-react": "catalog:",
-    "next": "^16.2.3",
+    "next": "16.2.3",
     "next-themes": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
@@ -37,15 +38,22 @@
   },
   "devDependencies": {
     "@Poneglyph/config": "workspace:*",
-    "@tailwindcss/postcss": "^4.1.18",
+    "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "autoprefixer": "^10.0.1",
-    "eslint": "^8",
-    "eslint-config-next": "14.2.29",
+    "oxlint": "latest",
     "postcss": "^8",
     "tailwindcss": "catalog:",
     "typescript": "^5"
-  }
+  },
+  "ignoreScripts": [
+    "sharp",
+    "unrs-resolver"
+  ],
+  "trustedDependencies": [
+    "sharp",
+    "unrs-resolver"
+  ]
 }
