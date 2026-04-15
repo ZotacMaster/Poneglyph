@@ -6,30 +6,17 @@ mod sync;
 
 use anyhow::Result;
 use lambda_http::{service_fn, Body, Error, Request, Response};
-use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use serde_json::json;
 use sources::types::{EmbedBatchRequest, SyncRequest};
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
 fn init_tracing() {
-    let env_filter = tracing_subscriber::EnvFilter::try_from_default_env()
-        .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("info"));
-
-    if std::env::var("AWS_LAMBDA_FUNCTION_NAME").is_ok() {
-        tracing_subscriber::fmt()
-            .with_env_filter(env_filter)
-            .init();
-    } else {
-        let file_appender = tracing_appender::rolling::daily(".", "log.txt");
-        let (non_blocking, _guard) = tracing_appender::non_blocking(file_appender);
-
-        tracing_subscriber::fmt()
-            .with_env_filter(env_filter)
-            .with_writer(non_blocking)
-            .with_ansi(false)
-            .init();
-
-        Box::leak(Box::new(_guard));
-    }
+    tracing_subscriber::fmt()
+        .with_env_filter(
+            tracing_subscriber::EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("info")),
+        )
+        .init();
 }
 
 #[tokio::main]
@@ -44,18 +31,49 @@ async fn main() -> Result<(), Error> {
 
     tracing::info!("Worker initialized, database connected");
 
+    // ENTRY POINT SELECTION
+    //
+    // AWS_LAMBDA_FUNCTION_NAME is set automatically by the Lambda runtime.
+    // If present → deploy as AWS Lambda (handler route)
+    // If absent → run as local HTTP server (dev/testing)
     if std::env::var("AWS_LAMBDA_FUNCTION_NAME").is_ok() {
+        // AWS Lambda
         lambda_http::run(service_fn(|req: Request| {
             handler(req, &pool)
         }))
         .await?;
     } else {
+        // Local HTTP Server
+        // 
+        // Dev commands:
+        //   curl -X POST http://localhost:8080/sync \
+        //     -H "Content-Type: application/json" \
+        //     -d '{"source":"opencity","query":"Survey"}'
+        //   curl http://localhost:8080/health
         start_local_server(pool).await?;
     }
 
     Ok(())
 }
 
+
+// ENTRY POINT 1: Local Development HTTP Server
+//
+// Purpose: Accepts raw HTTP requests over TCP when running via `cargo run`.
+//          Provides the same routes as the Lambda handler, but locally.
+//
+// Routes:
+//   POST /sync          → sync::run_sync     (fetch + ingest external datasets)
+//   POST /embed-batch   → sync::run_embed_batch (generate embeddings for datasets)
+//   GET  /health        → 200 OK
+//   POST /health        → 200 OK
+//
+// Notes:
+//   • Uses a bare TCP listener — no framework, just tokio::net::TcpListener.
+//   • Request body is read raw into an 8KB buffer and parsed manually.
+//   • Response is raw HTTP/1.1 with a JSON body.
+//   • Each connection is handled in its own tokio task (spawned).
+//   • Safe to expose on 0.0.0.0 locally; restrict to 127.0.0.1 in prod.
 async fn start_local_server(pool: sqlx::PgPool) -> Result<()> {
     let listener = tokio::net::TcpListener::bind("0.0.0.0:8080").await?;
     tracing::info!("Starting local HTTP server on http://0.0.0.0:8080");
@@ -84,49 +102,49 @@ async fn start_local_server(pool: sqlx::PgPool) -> Result<()> {
             let body_start = request_str.find("\r\n\r\n").map(|i| i + 4).unwrap_or(0);
             let body = &request_str[body_start..];
 
-        match (method, path) {
-            ("POST", "/sync") => {
-                let sync_req: SyncRequest = match serde_json::from_str(body) {
-                    Ok(r) => r,
-                    Err(e) => {
-                        make_response(&mut stream, 400, &json!({"error": format!("Invalid request body: {}", e)})).await;
-                        return;
-                    }
-                };
+            match (method, path) {
+                ("POST", "/sync") => {
+                    let sync_req: SyncRequest = match serde_json::from_str(body) {
+                        Ok(r) => r,
+                        Err(e) => {
+                            make_response(&mut stream, 400, &json!({"error": format!("Invalid request body: {}", e)})).await;
+                            return;
+                        }
+                    };
 
-                match sync::run_sync(&pool, &sync_req).await {
-                    Ok(resp) => make_response(&mut stream, 200, &resp).await,
-                    Err(e) => {
-                        tracing::error!("Sync failed: {:?}", e);
-                        make_response(&mut stream, 500, &json!({"error": format!("Sync failed: {}", e)})).await;
+                    match sync::run_sync(&pool, &sync_req).await {
+                        Ok(resp) => make_response(&mut stream, 200, &resp).await,
+                        Err(e) => {
+                            tracing::error!("Sync failed: {:?}", e);
+                            make_response(&mut stream, 500, &json!({"error": format!("Sync failed: {}", e)})).await;
+                        }
                     }
                 }
-            }
-            ("POST", "/embed-batch") => {
-                let embed_req: EmbedBatchRequest = match serde_json::from_str(body) {
-                    Ok(r) => r,
-                    Err(e) => {
-                        make_response(&mut stream, 400, &json!({"error": format!("Invalid request body: {}", e)})).await;
-                        return;
-                    }
-                };
+                ("POST", "/embed-batch") => {
+                    let embed_req: EmbedBatchRequest = match serde_json::from_str(body) {
+                        Ok(r) => r,
+                        Err(e) => {
+                            make_response(&mut stream, 400, &json!({"error": format!("Invalid request body: {}", e)})).await;
+                            return;
+                        }
+                    };
 
-                match sync::run_embed_batch(&pool, &embed_req).await {
-                    Ok(resp) => make_response(&mut stream, 200, &resp).await,
-                    Err(e) => {
-                        tracing::error!("Embed batch failed: {:?}", e);
-                        make_response(&mut stream, 500, &json!({"error": format!("Embed batch failed: {}", e)})).await;
+                    match sync::run_embed_batch(&pool, &embed_req).await {
+                        Ok(resp) => make_response(&mut stream, 200, &resp).await,
+                        Err(e) => {
+                            tracing::error!("Embed batch failed: {:?}", e);
+                            make_response(&mut stream, 500, &json!({"error": format!("Embed batch failed: {}", e)})).await;
+                        }
                     }
                 }
+                ("GET", "/health") | ("POST", "/health") => {
+                    make_response(&mut stream, 200, &json!({"status": "healthy"})).await;
+                }
+                _ => {
+                    make_response(&mut stream, 404, &json!({"error": "Not found"})).await;
+                }
             }
-            ("GET", "/health") | ("POST", "/health") => {
-                make_response(&mut stream, 200, &json!({"status": "healthy"})).await;
-            }
-            _ => {
-                make_response(&mut stream, 404, &json!({"error": "Not found"})).await;
-            }
-        }
-    });
+        });
     }
 }
 
@@ -163,6 +181,21 @@ fn status_text(code: u16) -> &'static str {
     }
 }
 
+
+// AWS Lambda Handler
+//
+// Purpose: Handle API Gateway proxy requests from the Lambda runtime.
+//          Called by lambda_http::run() — same routes as local server.
+//
+// Routes (identical to local server):
+//   POST /sync          → sync::run_sync
+//   POST /embed-batch   → sync::run_embed_batch
+//   GET  /health        → 200 OK
+//
+// Notes:
+//   • lambda_http wraps Lambda's event format into a Request/Response.
+//   • Logs go to CloudWatch via stdout (no file writing in Lambda).
+//   • Lambda cold starts load the config + pool once, then reuse.
 async fn handler(req: Request, pool: &sqlx::PgPool) -> Result<Response<Body>, Error> {
     let path = req.uri().path().to_string();
     let method = req.method().as_str();

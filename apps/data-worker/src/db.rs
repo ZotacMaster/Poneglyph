@@ -1,14 +1,23 @@
 use anyhow::{Context, Result};
+use sqlx::postgres::PgConnectOptions;
 use sqlx::postgres::PgPoolOptions;
-use sqlx::{Executor, Postgres, PgPool, Row};
+use sqlx::{PgPool, Row};
+use std::collections::HashSet;
+use std::str::FromStr;
 use uuid::Uuid;
 
 use crate::sources::types::SourceDataset;
 
 pub async fn create_pool(database_url: &str) -> Result<PgPool> {
+    let connect_options = PgConnectOptions::from_str(database_url)
+        .context("Invalid DATABASE_URL")?
+        // Supabase poolers (PgBouncer transaction mode) can fail with
+        // "prepared statement already exists" when statement caching is on.
+        .statement_cache_capacity(0);
+
     PgPoolOptions::new()
         .max_connections(5)
-        .connect(database_url)
+        .connect_with(connect_options)
         .await
         .context("Failed to create database pool")
 }
@@ -16,6 +25,7 @@ pub async fn create_pool(database_url: &str) -> Result<PgPool> {
 /// Look up source id by name.
 pub async fn get_source_id_by_name(pool: &PgPool, name: &str) -> Result<Option<Uuid>> {
     let row = sqlx::query("SELECT id FROM sources WHERE name = $1")
+        .persistent(false)
         .bind(name)
         .fetch_optional(pool)
         .await
@@ -24,15 +34,46 @@ pub async fn get_source_id_by_name(pool: &PgPool, name: &str) -> Result<Option<U
     Ok(row.map(|r| r.get("id")))
 }
 
+/// Return external_ids that already exist for a source.
+pub async fn get_existing_external_ids(
+    pool: &PgPool,
+    source_id: Uuid,
+    external_ids: &[String],
+) -> Result<HashSet<String>> {
+    if external_ids.is_empty() {
+        return Ok(HashSet::new());
+    }
+
+    let rows = sqlx::query(
+        r#"
+        SELECT external_id
+        FROM datasets
+        WHERE source_id = $1
+          AND external_id = ANY($2)
+        "#,
+    )
+    .persistent(false)
+    .bind(source_id)
+    .bind(external_ids)
+    .fetch_all(pool)
+    .await
+    .context("Failed to fetch existing external ids")?;
+
+    let mut existing = HashSet::with_capacity(rows.len());
+    for row in rows {
+        let external_id: String = row.get("external_id");
+        existing.insert(external_id);
+    }
+
+    Ok(existing)
+}
+
 /// Upsert a dataset by external_id. Returns (dataset_id, was_insert).
-pub async fn upsert_dataset<'e, E>(
-    executor: E,
+pub async fn upsert_dataset(
+    pool: &PgPool,
     ds: &SourceDataset,
     source_id: Uuid,
-) -> Result<(Uuid, bool)>
-where
-    E: Executor<'e, Database = Postgres>,
-{
+) -> Result<(Uuid, bool)> {
     let row = sqlx::query(
         r#"
         INSERT INTO datasets (external_id, source_id, title, description, publisher, publication_date, source_url, s3_keys, file_types, dataset_status)
@@ -49,6 +90,7 @@ where
         RETURNING id, (xmax = 0) AS inserted
         "#,
     )
+    .persistent(false)
     .bind(&ds.external_id)
     .bind(source_id)
     .bind(&ds.title)
@@ -58,7 +100,7 @@ where
     .bind(&ds.source_url)
     .bind(&ds.resource_urls)
     .bind(&ds.resource_formats)
-    .fetch_one(executor)
+    .fetch_one(pool)
     .await
     .context("Failed to upsert dataset")?;
 
@@ -66,34 +108,40 @@ where
 }
 
 /// Upsert a tag by name. Returns tag_id.
-pub async fn upsert_tag<'e, E>(executor: E, tag_name: &str) -> Result<Uuid>
-where
-    E: Executor<'e, Database = Postgres>,
-{
+pub async fn upsert_tag(pool: &PgPool, tag_name: &str) -> Result<Uuid> {
     let slug = tag_name.to_lowercase().replace(' ', "-");
 
-    let row = sqlx::query(
+    let inserted = sqlx::query(
         r#"
         INSERT INTO tags (name, slug)
         VALUES ($1, $2)
-        ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name
+        ON CONFLICT (name) DO NOTHING
         RETURNING id
         "#,
     )
+    .persistent(false)
     .bind(tag_name)
     .bind(&slug)
-    .fetch_one(executor)
+    .fetch_optional(pool)
     .await
     .context("Failed to upsert tag")?;
+
+    if let Some(row) = inserted {
+        return Ok(row.get("id"));
+    }
+
+    let row = sqlx::query("SELECT id FROM tags WHERE name = $1")
+        .persistent(false)
+        .bind(tag_name)
+        .fetch_one(pool)
+        .await
+        .context("Failed to fetch existing tag id")?;
 
     Ok(row.get("id"))
 }
 
 /// Link a dataset to a tag (ignore if already linked).
-pub async fn link_dataset_tag<'e, E>(executor: E, dataset_id: Uuid, tag_id: Uuid) -> Result<()>
-where
-    E: Executor<'e, Database = Postgres>,
-{
+pub async fn link_dataset_tag(pool: &PgPool, dataset_id: Uuid, tag_id: Uuid) -> Result<()> {
     sqlx::query(
         r#"
         INSERT INTO dataset_tags (dataset_id, tag_id)
@@ -101,9 +149,10 @@ where
         ON CONFLICT DO NOTHING
         "#,
     )
+    .persistent(false)
     .bind(dataset_id)
     .bind(tag_id)
-    .execute(executor)
+    .execute(pool)
     .await
     .context("Failed to link dataset tag")?;
 
@@ -143,6 +192,7 @@ pub async fn update_embedding(
         WHERE id = $2
         "#,
     )
+    .persistent(false)
     .bind(&vec_str)
     .bind(dataset_id)
     .execute(pool)
@@ -168,6 +218,7 @@ pub async fn archive_missing_datasets(
         AND dataset_status != 'archived'
         "#,
     )
+    .persistent(false)
     .bind(source_id)
     .bind(live_external_ids)
     .execute(pool)
@@ -186,6 +237,7 @@ pub async fn create_sync_log(pool: &PgPool, source_id: Uuid, total_found: i32) -
         RETURNING id
         "#,
     )
+    .persistent(false)
     .bind(source_id)
     .bind(total_found)
     .fetch_one(pool)
@@ -224,6 +276,7 @@ pub async fn update_sync_log(
         WHERE id = $1
         "#,
     )
+    .persistent(false)
     .bind(log_id)
     .bind(added)
     .bind(updated)
@@ -246,6 +299,7 @@ pub async fn fail_sync_log(pool: &PgPool, log_id: Uuid, error: &str) -> Result<(
         WHERE id = $1
         "#,
     )
+    .persistent(false)
     .bind(log_id)
     .bind(error)
     .execute(pool)
