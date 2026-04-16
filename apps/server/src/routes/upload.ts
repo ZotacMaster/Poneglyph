@@ -108,6 +108,16 @@ upload.post("/", async (c) => {
 
   // Upload thumbnail in parallel with attachments
   const thumbnailFile = formData.get("thumbnail") as File | null;
+
+  if (thumbnailFile && thumbnailFile.size > MAX_FILE_SIZE) {
+    return c.json(
+      {
+        error: `Thumbnail ${thumbnailFile.name} is too large. Max limit is ${MAX_FILE_SIZE / 1024 / 1024}MB.`,
+      },
+      413,
+    );
+  }
+
   const thumbnailPromise = thumbnailFile
     ? (async () => {
         const thumbExt = thumbnailFile.name.split(".").pop() ?? "bin";
