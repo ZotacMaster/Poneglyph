@@ -199,21 +199,13 @@ export default function ArticlePage() {
   useEffect(() => {
     async function fetchDatasets() {
       try {
-        console.log("Fetching datasets...");
         const res = await apiClient.api.v1.datasets.$get({ query: { limit: "10" } });
-        console.log("Response status:", res.status, res.ok);
         if (res.ok) {
           const json = await res.json();
-          console.log("Response json:", JSON.stringify(json).slice(0, 200));
           const parsed = PaginatedResponseSchema(DatasetListItemSchema).safeParse(json);
           if (parsed.success) {
-            console.log("Parsed successfully, datasets:", parsed.data.data.length);
             setDatasets(parsed.data.data);
-          } else {
-            console.error("Parse error:", parsed.error);
           }
-        } else {
-          console.error("Response not ok");
         }
       } catch (error) {
         console.error("Failed to fetch datasets:", error);
