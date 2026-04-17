@@ -1,210 +1,106 @@
-"use client";
+'use client';
 
-import { useState, useRef, useEffect } from "react";
-import { Search, Send, Loader2 } from "lucide-react";
-import { ChatSidebar } from "@/components/chat-sidebar";
-import { ResearchNav } from "@/components/research/research-nav";
-import {
-  CustomBarChart,
-  CustomDonutChart,
-  CustomAreaChart,
-} from "@/components/research/research-charts";
-
-interface Message {
-  id: string;
-  role: "user" | "assistant";
-  content: string;
-  charts?: ChartData[];
-  sources?: { title: string; url: string }[];
-}
-
-interface ChartData {
-  type: "bar" | "donut" | "area";
-  title: string;
-  data: { name: string; value: number; color?: string }[];
-}
+import { IconPlayerPlay } from '@tabler/icons-react';
+import { ResearchSidebar } from '@/components/research/research-sidebar';
+import { ResearchChatMessage } from '@/components/research/research-chat-message';
+import { ResearchStatusLog } from '@/components/research/research-status-log';
+import { ResearchInput } from '@/components/research/research-input';
 
 export default function ResearchPage() {
-  const [query, setQuery] = useState("");
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [mounted, setMounted] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (mounted && messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [messages, isLoading, mounted]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!query.trim() || isLoading) return;
-
-    const userMessage: Message = { id: Date.now().toString(), role: "user", content: query };
-    setMessages((prev) => [...prev, userMessage]);
-    setQuery("");
-    setIsLoading(true);
-
-    try {
-      const response = await fetch(
-        `http://localhost:3001/api/query?q=${encodeURIComponent(query)}`,
-      );
-      const data = await response.json();
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: data.answer,
-        charts: data.charts,
-        sources: data.sources,
-      };
-      setMessages((prev) => [...prev, assistantMessage]);
-    } catch {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: (Date.now() + 1).toString(),
-          role: "assistant",
-          content: "Sorry, I couldn't fetch the data. Please make sure the API server is running.",
-        },
-      ]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  if (!mounted) {
-    return (
-      <div className="flex flex-col h-screen">
-        <ResearchNav />
-        <div className="flex flex-1">
-          <ChatSidebar />
-          <div className="flex-1 flex items-center justify-center bg-white">
-            <div className="w-6 h-6 border-2 border-grey-3 border-t-black rounded-full animate-spin" />
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="flex flex-col min-h-screen">
-      <ResearchNav />
-      <div className="flex flex-1 h-[calc(100vh-56px)] overflow-hidden">
-        <ChatSidebar />
-        <div className="flex-1 flex flex-col bg-white overflow-hidden">
-          <div className="flex-1 overflow-y-auto px-6 py-4">
-            <div className="max-w-2xl mx-auto h-full">
-              {messages.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full text-center py-20">
-                  <h2 className="text-[clamp(36px,6vw,56px)] font-medium leading-tight tracking-tight text-black mb-6">
-                    Ask anything about{" "}
-                    <span style={{ color: "#bfff00" }}>human trafficking data</span>
-                  </h2>
-                  <p className="text-base text-grey-1 mb-10 max-w-lg">
-                    Query our open commons of 156,000+ victim records, 189 countries, and CTDC
-                    global data.
-                  </p>
-                  <div className="flex flex-wrap gap-3 justify-center max-w-xl">
-                    {[
-                      "Victims by region",
-                      "Exploitation types",
-                      "Children trafficked",
-                      "Top countries of origin",
-                    ].map((suggestion) => (
-                      <button
-                        key={suggestion}
-                        onClick={() => setQuery(suggestion)}
-                        className="px-5 py-3 text-sm text-black bg-grey-4 border border-grey-3 rounded-full hover:border-grey-2 hover:bg-white transition-colors"
-                      >
-                        {suggestion}
-                      </button>
-                    ))}
+    <div className="flex h-screen bg-background text-foreground font-sans overflow-hidden">
+      
+      <ResearchSidebar />
+
+      {/* Main Content Area */}
+      <main className="flex-1 flex flex-col relative overflow-hidden">
+        
+        {/* Scrollable Conversation */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="max-w-3xl mx-auto px-8 pt-8 pb-32">
+            
+            <h1 className="text-lg font-medium mb-8">Acme Research Dashboard</h1>
+
+            {/* Conversation Thread */}
+            <div className="space-y-6">
+              
+              <ResearchChatMessage content="let's build a dashboard to make our research findings interactive" />
+
+              <ResearchStatusLog>
+                Explored 12 files, 4 searches
+              </ResearchStatusLog>
+
+              {/* Agent Text 1 */}
+              <div className="px-1 text-[15px] leading-relaxed text-foreground">
+                <p>On it. I'll build the dashboard using your theme config, wire up the research data, and add interactive charts with public access controls.</p>
+              </div>
+
+              <ResearchStatusLog>
+                <div>Worked for 14m 22s</div>
+                <div>Processed screen recording</div>
+              </ResearchStatusLog>
+
+              {/* Agent Text 2 */}
+              <div className="px-1 text-[15px] leading-relaxed text-foreground">
+                <p>Done! Here's a walkthrough of the dashboard.</p>
+              </div>
+
+              {/* Media Placeholder */}
+              <div className="w-[85%] rounded-xl overflow-hidden border border-border/80 shadow-elevated relative bg-surface-200 mt-2">
+                <div className="aspect-[16/10] bg-gradient-to-br from-surface-300 to-surface-200 opacity-60 w-full h-full" />
+                
+                {/* Fake App Window Header inside Video */}
+                <div className="absolute top-0 left-0 right-0 h-10 border-b border-border/40 bg-surface-100/50 flex items-center px-4 gap-2">
+                  <div className="w-2.5 h-2.5 rounded-full bg-border/80" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-border/80" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-border/80" />
+                </div>
+                
+                {/* Fake Sidebar inside Video */}
+                <div className="absolute top-10 left-0 bottom-0 w-48 border-r border-border/40 bg-surface-100/30 p-4 space-y-3">
+                  <div className="h-2 w-3/4 rounded-full bg-border/60" />
+                  <div className="h-2 w-1/2 rounded-full bg-border/40" />
+                  <div className="h-2 w-2/3 rounded-full bg-border/40" />
+                  <div className="h-2 w-1/2 rounded-full bg-border/40" />
+                </div>
+                
+                {/* Fake Main Content inside Video */}
+                <div className="absolute top-10 left-48 right-0 bottom-0 p-6 space-y-4">
+                  <div className="h-4 w-48 rounded-full bg-border/50" />
+                  <div className="space-y-2 mt-8">
+                    <div className="h-2 w-full rounded-full bg-border/30" />
+                    <div className="h-2 w-11/12 rounded-full bg-border/30" />
+                    <div className="h-2 w-full rounded-full bg-border/30" />
+                    <div className="h-2 w-4/5 rounded-full bg-border/30" />
+                    <div className="h-2 w-[95%] rounded-full bg-border/30" />
+                    <div className="h-2 w-full rounded-full bg-border/30" />
                   </div>
                 </div>
-              ) : (
-                <div className="flex flex-col gap-6 pb-20">
-                  {messages.map((message) => (
-                    <div
-                      key={message.id}
-                      className={
-                        message.role === "user" ? "flex justify-end" : "flex flex-col gap-4"
-                      }
-                    >
-                      <div
-                        className={
-                          message.role === "user"
-                            ? "max-w-[80%] px-4 py-3 bg-black text-white rounded-2xl rounded-br-sm text-sm"
-                            : "text-base text-black leading-relaxed"
-                        }
-                      >
-                        {message.content}
-                      </div>
-                      {message.role === "assistant" &&
-                        message.charts?.map((chart, i) => (
-                          <div key={i} className="p-5 bg-grey-4 rounded-lg">
-                            {chart.type === "bar" && (
-                              <CustomBarChart data={chart.data} title={chart.title} />
-                            )}
-                            {chart.type === "donut" && (
-                              <CustomDonutChart data={chart.data} title={chart.title} />
-                            )}
-                            {chart.type === "area" && (
-                              <CustomAreaChart data={chart.data} title={chart.title} />
-                            )}
-                          </div>
-                        ))}
+
+                  {/* Play Button Overlay */}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-14 h-14 rounded-full bg-background/80 shadow-elevated flex items-center justify-center backdrop-blur-md cursor-pointer hover:bg-background transition-colors border border-border">
+                      <IconPlayerPlay className="w-6 h-6 text-foreground ml-1" fill="currentColor" />
                     </div>
-                  ))}
-                  {isLoading && (
-                    <div className="flex items-center gap-1 ml-4">
-                      <span className="w-1.5 h-1.5 bg-grey-2 rounded-full animate-pulse" />
-                      <span
-                        className="w-1.5 h-1.5 bg-grey-2 rounded-full animate-pulse"
-                        style={{ animationDelay: "0.15s" }}
-                      />
-                      <span
-                        className="w-1.5 h-1.5 bg-grey-2 rounded-full animate-pulse"
-                        style={{ animationDelay: "0.3s" }}
-                      />
-                    </div>
-                  )}
-                  <div ref={messagesEndRef} />
-                </div>
-              )}
-            </div>
-          </div>
-          <div className="px-6 py-4 border-t border-grey-3 bg-white">
-            <div className="max-w-2xl mx-auto">
-              <form
-                onSubmit={handleSubmit}
-                className="flex items-center gap-3 bg-white border border-grey-3 rounded-lg p-3 focus-within:border-grey-2 transition-colors shadow-sm"
-              >
-                <Search size={18} className="text-grey-2 shrink-0 ml-1" />
-                <input
-                  type="text"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Ask about trafficking data..."
-                  className="flex-1 text-base bg-transparent outline-none text-black placeholder:text-grey-2"
-                  disabled={isLoading}
-                />
-                <button
-                  type="submit"
-                  disabled={!query.trim() || isLoading}
-                  className="p-2 bg-black text-white rounded hover:bg-black/80 transition-colors"
-                >
-                  {isLoading ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
-                </button>
-              </form>
+                  </div>
+              </div>
+
+              {/* Summary Section */}
+              <div className="px-1 mt-6">
+                <h2 className="text-lg font-medium mb-2">Summary</h2>
+                <p className="text-[15px] leading-relaxed text-foreground">
+                  Built the interactive dashboard with realtime charts, data from Snowflake, and shadcn components. Deployed to staging via Vercel.
+                </p>
+              </div>
+
             </div>
           </div>
         </div>
-      </div>
+
+        <ResearchInput />
+
+      </main>
+
     </div>
   );
 }
