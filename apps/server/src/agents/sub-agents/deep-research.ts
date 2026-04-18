@@ -44,7 +44,12 @@ export const deepResearchTool = tool({
     const hash = hashQuery(combinedTopic);
     const cacheKey = `tool:deep:${DEEP_CACHE_VERSION}:${hash}`;
 
-    const cached = await redis.get<string>(cacheKey);
+    let cached: string | null = null;
+    try {
+      cached = await redis.get<string>(cacheKey);
+    } catch {
+      // Redis down — fall back to API
+    }
     if (cached) return cached;
 
     const prompt = context

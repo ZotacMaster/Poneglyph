@@ -76,7 +76,10 @@ export const searchDatabaseTool = tool({
       SELECT dt.dataset_id, t.name
       FROM dataset_tags dt
       INNER JOIN tags t ON dt.tag_id = t.id
-      WHERE dt.dataset_id IN (${sql.join(datasetIds.map((id) => sql`${id}`), sql`, `)})
+      WHERE dt.dataset_id IN (${sql.join(
+        datasetIds.map((id) => sql`${id}`),
+        sql`, `,
+      )})
     `);
 
     // Map tags to their datasets for O(1) lookup

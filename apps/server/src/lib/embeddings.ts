@@ -16,8 +16,13 @@ export async function embedQuery(query: string): Promise<number[]> {
   const cacheKey = `emb:${hashQuery(normalized)}`;
 
   // Check Redis cache first
-  const cached = await redis.get<number[]>(cacheKey);
-  if (cached) return cached; // TODO: have to add a cache hit log
+  let cached: number[] | null = null;
+  try {
+    cached = await redis.get<number[]>(cacheKey);
+  } catch {
+    // Redis down — fall back to API
+  }
+  if (cached) return cached;
 
   const { embedding } = await embed({
     model: EMBEDDING_MODEL,

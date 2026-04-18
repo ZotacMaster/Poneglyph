@@ -26,7 +26,12 @@ async function runGoogleGroundedSearch(query: string): Promise<CachedWebResult> 
   const hash = hashQuery(query);
   const cacheKey = `tool:web:${WEB_CACHE_VERSION}:${hash}`;
 
-  const cached = await redis.get<CachedWebResult>(cacheKey);
+  let cached: CachedWebResult | null = null;
+  try {
+    cached = await redis.get<CachedWebResult>(cacheKey);
+  } catch {
+    // Redis down — fall back to API
+  }
   if (cached) return cached;
 
   const { text, sources } = await generateText({
