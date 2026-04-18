@@ -3,7 +3,7 @@ import { google } from "@ai-sdk/google";
 import { redis } from "./redis";
 import { createHash } from "node:crypto";
 
-const EMBEDDING_MODEL = google.textEmbeddingModel("gemini-embedding-exp-03-07");
+const EMBEDDING_MODEL = google.textEmbeddingModel("gemini-embedding-2-preview");
 const CACHE_TTL = 60 * 60 * 24; // 24 hours
 
 function hashQuery(query: string): string {
@@ -20,11 +20,16 @@ export async function embedQuery(query: string): Promise<number[]> {
 
   // Check Redis cache first
   const cached = await redis.get<number[]>(cacheKey);
-  if (cached) return cached;
+  if (cached) return cached; // TODO: have to add a cache hit log
 
   const { embedding } = await embed({
     model: EMBEDDING_MODEL,
     value: query,
+    providerOptions: {
+      google: {
+        outputDimensionality: 768,
+      },
+    },
   });
 
   // Cache for 24h (fire-and-forget)

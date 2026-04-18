@@ -1,7 +1,8 @@
 import { ToolLoopAgent, stepCountIs } from "ai";
 import { google } from "@ai-sdk/google";
 import { searchDatabaseTool } from "./tools/search-db";
-import { deepResearchTool } from "./deep-research";
+import { deepResearchTool } from "./sub-agents/deep-research";
+import { webSearchTool } from "./tools/web-search";
 import { orchestratorSystemPrompt } from "./prompts/system";
 
 /**
@@ -10,20 +11,27 @@ import { orchestratorSystemPrompt } from "./prompts/system";
  *
  * Tools:
  *  - searchDatabase: pgvector semantic search on internal datasets
- *  - google_search: native Gemini grounding (real-time web search)
+ *  - webSearch: Gemini Flash native Google Search grounding (real-time web)
  *  - deepResearch: Groq + Tavily multi-step research subagent
+ *
+ * Note: google.tools.googleSearch({}) (provider-defined tool) cannot be mixed
+ * with custom tools in the same Gemini request. webSearch wraps it in an
+ * isolated generateText call, exposing it here as a plain custom tool.
  *
  * Ref: https://ai-sdk.dev/docs/reference/ai-sdk-core/tool-loop-agent
  */
 export function createOrchestratorAgent() {
   return new ToolLoopAgent({
-    model: google("gemini-2.5-flash-preview-05-20"),
+    model: google("gemini-2.5-flash"),
     instructions: orchestratorSystemPrompt,
     tools: {
       searchDatabase: searchDatabaseTool,
-      google_search: google.tools.googleSearch({}),
+      webSearch: webSearchTool,
       deepResearch: deepResearchTool,
     },
     stopWhen: stepCountIs(10),
   });
 }
+
+// FIXME: Have to handel 429. maybe we can switch to another api key
+// or maybe show user logs?

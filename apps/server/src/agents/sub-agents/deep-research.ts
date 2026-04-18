@@ -2,7 +2,7 @@ import { ToolLoopAgent, tool, stepCountIs } from "ai";
 import { groq } from "@ai-sdk/groq";
 import { tavilySearch, tavilyExtract } from "@tavily/ai-sdk";
 import { z } from "zod";
-import { deepResearchSystemPrompt } from "./prompts/deep-research";
+import { deepResearchSystemPrompt } from "../prompts/deep-research";
 
 // Non-streaming subagent — it's used as a tool by the parent orchestrator,
 // so it just returns the final compiled result, not a stream.
@@ -10,7 +10,7 @@ import { deepResearchSystemPrompt } from "./prompts/deep-research";
 // so it returns the final compiled result, not a stream.
 const deepResearchAgent = new ToolLoopAgent({
   model: groq("llama-3.3-70b-versatile"),
-  instructions: deepResearchSystemPrompt, // system -> instructions in AI SDK v6
+  instructions: deepResearchSystemPrompt,
   tools: {
     webSearch: tavilySearch({
       maxResults: 5,

@@ -4,7 +4,7 @@ import { db, sql } from "@Poneglyph/db";
 import { embedQuery } from "../../lib/embeddings";
 import { getPresignedUrl } from "../../lib/s3";
 
-const TOP_K = 10;
+const TOP_K = 5; // FIXME: I will make it 10 after we have much more data in db
 
 /**
  * Embeds user query and runs pgvector cosine similarity against datasets.
@@ -64,7 +64,10 @@ export const searchDatabaseTool = tool({
     const rows = results.rows;
 
     if (rows.length === 0) {
-      return { datasets: [], message: "No matching datasets found in the internal database." };
+      return {
+        datasets: [],
+        message: "No matching datasets found in the internal database.",
+      };
     }
 
     // Enrich each result: generate presigned S3 URLs for file access,
