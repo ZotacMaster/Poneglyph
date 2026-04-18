@@ -53,7 +53,12 @@ coverage
 .cache
 tmp
 temp
+.Rhistory
+PR.md
 
 # Reference directory
 raw/
 web_backup_temp/
+
+# Worktree directories
+crazy-ui/

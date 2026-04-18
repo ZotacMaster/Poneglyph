@@ -2,6 +2,7 @@ import { createDb } from "@Poneglyph/db";
 import * as schema from "@Poneglyph/db/schema/auth";
 import { env } from "@Poneglyph/env/server";
 import { betterAuth } from "better-auth";
+import { admin } from "better-auth/plugins";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 
 export function createAuth() {
@@ -13,7 +14,7 @@ export function createAuth() {
 
       schema: schema,
     }),
-    trustedOrigins: [env.CORS_ORIGIN],
+    trustedOrigins: env.CORS_ORIGINS.split(",").map((o) => o.trim()),
     emailAndPassword: {
       enabled: true,
     },
@@ -26,7 +27,7 @@ export function createAuth() {
         httpOnly: true,
       },
     },
-    plugins: [],
+    plugins: [admin()],
   });
 }
 

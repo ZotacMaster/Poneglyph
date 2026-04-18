@@ -17,7 +17,7 @@
     "@ai-sdk/groq": "^3.0.35",
     "@aws-sdk/client-s3": "^3.800.0",
     "@aws-sdk/s3-request-presigner": "^3.800.0",
-    "@hono/zod-validator": "^0.4.3",
+    "@hono/zod-validator": "^0.7.6",
     "@tavily/ai-sdk": "^0.4.1",
     "@upstash/redis": "^1.37.0",
     "ai": "^6.0.168",
