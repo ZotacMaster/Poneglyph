@@ -1,5 +1,6 @@
 {
   "lockfileVersion": 1,
+  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "Poneglyph",
@@ -171,7 +172,7 @@
     "sharp",
   ],
   "overrides": {
-    "drizzle-orm": "^0.45.1",
+    "drizzle-orm": "^0.45.2",
   },
   "catalog": {
     "@types/bun": "^1.3.4",
