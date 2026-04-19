@@ -150,26 +150,20 @@ export const organisation = pgTable(
       .references(() => user.id, { onDelete: "cascade" }),
 
     // Core identity
-    orgName: varchar("org_name", { length: 255 }).notNull(),
     tagline: varchar("tagline", { length: 160 }),
     description: text("description"),
-    logo: text("logo"), // R2 object key (not a URL — keys are stable, presigned URLs expire)
 
     // Location & contact
     country: varchar("country", { length: 100 }),
     website: text("website"),
-    contactEmail: text("contact_email"), // public-facing contact, may differ from auth email
+
 
     // Flexible social links — add keys without schema changes
     // e.g. { "twitter": "https://x.com/org", "linkedin": "https://linkedin.com/org" }
-    socialLinks: jsonb("social_links").$type<Record<string, string>>(),
+    socialLinks: text("social_links").array().$type<string[]>(),
 
     // Denormalized upload index — appended to by POST /api/upload/callback
     uploads: uuid("uploads").array().default(sql`'{}'::uuid[]`).notNull(),
-
-    // Admin verification
-    isVerified: boolean("is_verified").default(false).notNull(),
-    verifiedAt: timestamp("verified_at"), // null until an admin verifies
 
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
@@ -177,9 +171,6 @@ export const organisation = pgTable(
       .$onUpdate(() => new Date())
       .notNull(),
   },
-  (table) => [
-    index("organisation_is_verified_idx").on(table.isVerified),
-  ],
 );
 
 // ─── Relations ───────────────────────────────────────────────────────────────
