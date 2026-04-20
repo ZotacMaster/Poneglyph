@@ -9,6 +9,20 @@ const log = logger.getChild("upload");
 
 export const uploadRouter = new Hono();
 
+// File type -> extension mapping for S3 keys and DB file_type enum
+const MIME_TO_EXT: Record<string, string> = {
+  "application/pdf": "pdf",
+  "text/csv": "csv",
+  "application/json": "json",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "xlsx",
+  "application/vnd.ms-excel": "xls",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
+  "image/jpeg": "jpg",
+  "image/jpg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+};
+
 /**
  * POST /api/upload
  * Accepts multipart/form-data with:
@@ -25,36 +39,41 @@ export const uploadRouter = new Hono();
 uploadRouter.post("/", zValidator("form", UploadRequestSchema), async (c) => {
   const session = c.get("user" as never) as { id: string } | undefined;
   const userId = session?.id ?? "anonymous";
+
   const { title, description, summary, publisher, tags, files, thumbnail } = c.req.valid("form");
 
   const uploadId = crypto.randomUUID();
+
   log.info("Upload received: {fileCount} file(s), upload_id={uploadId}", {
     fileCount: files.length,
     uploadId,
   });
 
   const attachmentPromises = files.map(async (file) => {
-    const ext = file.name.split(".").pop() ?? "bin";
+    const ext = MIME_TO_EXT[file.type] ?? "other";
     const key = `uploads/${uploadId}/${crypto.randomUUID()}.${ext}`;
     const buffer = await file.arrayBuffer();
 
-    await uploadFile(key, buffer, file.type || "application/octet-stream");
+    await uploadFile(key, buffer, file.type);
+
     const presignedUrl = await getPresignedUrl(key);
 
     return {
       s3_key: key,
       presigned_url: presignedUrl,
-      mime_type: file.type || "application/octet-stream",
-      file_type: file.type.split("/").pop() ?? "other",
+      mime_type: file.type,
+      file_type: ext,
     };
   });
 
   const thumbnailPromise = thumbnail
     ? (async () => {
-        const thumbExt = thumbnail.name.split(".").pop() ?? "bin";
-        const thumbKey = `uploads/${uploadId}/thumbnail.${thumbExt}`;
+        const ext = MIME_TO_EXT[thumbnail.type];
+        const thumbKey = `uploads/${uploadId}/thumbnail.${ext}`;
         const thumbBuffer = await thumbnail.arrayBuffer();
-        await uploadFile(thumbKey, thumbBuffer, thumbnail.type || "image/*");
+
+        await uploadFile(thumbKey, thumbBuffer, thumbnail.type);
+
         return thumbKey;
       })()
     : Promise.resolve(undefined);
@@ -66,7 +85,6 @@ uploadRouter.post("/", zValidator("form", UploadRequestSchema), async (c) => {
     thumbnailPromise,
   ]);
 
-  // Publish to RabbitMQ — worker handles everything from here
   await publishUploadMessage({
     upload_id: uploadId,
     user_id: userId,
