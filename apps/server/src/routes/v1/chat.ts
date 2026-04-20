@@ -1,7 +1,11 @@
 import { Hono } from "hono";
+import { zValidator } from "@hono/zod-validator";
+import { ChatRequestSchema } from "@Poneglyph/schemas/chat";
 import { createAgentUIStreamResponse } from "ai";
-// import { auth } from "@Poneglyph/auth"; // TODO: re-enable auth
+import { logger } from "@/lib/logger";
 import { createOrchestratorAgent } from "../../agents/orchestrator";
+
+const log = logger.getChild("agent");
 
 export const chatRouter = new Hono();
 
@@ -13,36 +17,35 @@ export const chatRouter = new Hono();
  *
  *
  * curl -X POST http://localhost:3000/api/chat \
-  -H "Content-Type: application/json" \
-  -d '{
-    "messages": [
-      {
-        "id": "msg-1",
-        "role": "user",
-        "parts": [
-          {
-            "type": "text",
-            "text": "Tell me about....."
-          }
-        ]
-      }
-    ]
-  }' \
-  --no-buffer
+ *   -H "Content-Type: application/json" \
+ *   -d '{
+ *     "messages": [
+ *       {
+ *         "id": "msg-1",
+ *         "role": "user",
+ *         "parts": [
+ *           {
+ *             "type": "text",
+ *             "text": "Tell me about....."
+ *           }
+ *         ]
+ *       }
+ *     ]
+ *   }' \
+ *   --no-buffer
  */
 
-// TODO: will add zod validation on next pr
-chatRouter.post("/", async (c) => {
+chatRouter.post("/", zValidator("json", ChatRequestSchema), async (c) => {
   // Auth disabled for now — will add in next PR
   // const session = await auth.api.getSession({ headers: c.req.raw.headers });
   // if (!session?.user) return c.json({ error: "Authentication required" }, 401);
 
-  const body = await c.req.json();
-  const messages = body.messages;
+  const { messages } = c.req.valid("json");
+  const startTime = Date.now();
 
-  if (!Array.isArray(messages) || messages.length === 0) {
-    return c.json({ error: "messages array is required" }, 400);
-  }
+  log.info("Chat request received: {messageCount} message(s)", {
+    messageCount: messages.length,
+  });
 
   const agent = createOrchestratorAgent();
 
@@ -50,8 +53,14 @@ chatRouter.post("/", async (c) => {
   // 1. It's "uiMessages", not "messages" — that's what the API expects
   // 2. The `as any` cast is because TypeScript gets strict with generic tool types
   //    on ToolLoopAgent — the runtime behavior is fine, just a type narrowing issue
-  return createAgentUIStreamResponse({
+  const response = createAgentUIStreamResponse({
     agent: agent as any,
     uiMessages: messages,
   });
+
+  log.info("Chat stream initiated in {duration}ms", {
+    duration: Date.now() - startTime,
+  });
+
+  return response;
 });

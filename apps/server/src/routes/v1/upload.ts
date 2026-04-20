@@ -1,14 +1,17 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
-import { z } from "zod";
+import { UploadCallbackSchema } from "@Poneglyph/schemas/upload";
+import { logger } from "@/lib/logger";
 import { uploadFile, getPresignedUrl } from "../../lib/s3";
 import { publishUploadMessage } from "../../lib/queue";
+
+const log = logger.getChild("upload");
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 
 export const uploadRouter = new Hono();
 
-// File type → mime type mapping matching the DB file_type enum
+// File type -> mime type mapping matching the DB file_type enum
 const MIME_TO_FILE_TYPE: Record<string, string> = {
   "application/pdf": "pdf",
   "text/csv": "csv",
@@ -86,6 +89,10 @@ uploadRouter.post("/", async (c) => {
   }
 
   const uploadId = crypto.randomUUID();
+  log.info("Upload received: {fileCount} file(s), upload_id={uploadId}", {
+    fileCount: fileEntries.length,
+    uploadId,
+  });
 
   // Parallel upload all attachments to R2
   const attachmentPromises = fileEntries.map(async (file) => {
@@ -147,14 +154,9 @@ uploadRouter.post("/", async (c) => {
     callback_url: `${c.req.url.split("/api/")[0]}/api/upload/callback`,
   });
 
-  return c.json({ upload_id: uploadId, status: "queued" }, 202);
-});
+  log.info("Upload queued: upload_id={uploadId}", { uploadId });
 
-const callbackSchema = z.object({
-  upload_id: z.uuid(),
-  dataset_id: z.uuid(),
-  status: z.enum(["completed", "failed"]),
-  error: z.string().optional(),
+  return c.json({ upload_id: uploadId, status: "queued" }, 202);
 });
 
 /**
@@ -162,15 +164,20 @@ const callbackSchema = z.object({
  * Called by the Rust worker when processing is done.
  * Extend this to push WebSocket/SSE events to the frontend.
  */
-uploadRouter.post("/callback", zValidator("json", callbackSchema), async (c) => {
+uploadRouter.post("/callback", zValidator("json", UploadCallbackSchema), async (c) => {
   const body = c.req.valid("json");
 
   if (body.status === "completed") {
-    console.log(`[upload] completed: upload_id=${body.upload_id} dataset_id=${body.dataset_id}`);
+    log.info("Upload completed: upload_id={uploadId}, dataset_id={datasetId}", {
+      uploadId: body.upload_id,
+      datasetId: body.dataset_id,
+    });
   } else {
-    console.error(`[upload] failed: upload_id=${body.upload_id} error=${body.error}`);
+    log.warn("Upload failed: upload_id={uploadId}, error={error}", {
+      uploadId: body.upload_id,
+      error: body.error,
+    });
   }
-
   // TODO: push real-time notification to frontend (WebSocket/SSE)
   return c.json({ ok: true });
 });
