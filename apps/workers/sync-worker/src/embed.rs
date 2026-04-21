@@ -135,7 +135,11 @@ pub async fn embed_file(file_uri: &str, mime_type: &str, api_key: &str) -> Resul
     Ok(resp.embedding.values)
 }
 
-pub async fn embed_file_with_retry(file_uri: &str, mime_type: &str, api_key: &str) -> Result<Vec<f32>> {
+pub async fn embed_file_with_retry(
+    file_uri: &str,
+    mime_type: &str,
+    api_key: &str,
+) -> Result<Vec<f32>> {
     for attempt in 0..MAX_RETRIES {
         match embed_file(file_uri, mime_type, api_key).await {
             Ok(vector) => return Ok(vector),

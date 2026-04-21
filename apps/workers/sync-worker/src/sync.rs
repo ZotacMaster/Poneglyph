@@ -3,8 +3,8 @@ use sqlx::PgPool;
 
 use crate::db;
 use crate::resource_embed;
-use crate::sources::{self, ckan};
 use crate::sources::types::{SourceDataset, SyncRequest, SyncResponse};
+use crate::sources::{self, ckan};
 
 pub async fn run_sync(pool: &PgPool, req: &SyncRequest) -> Result<SyncResponse> {
     let source_id = match req.source_id {
@@ -77,7 +77,8 @@ pub async fn run_sync(pool: &PgPool, req: &SyncRequest) -> Result<SyncResponse> 
 
                 let metadata_text = ckan::build_embedding_text(ds);
                 if !metadata_text.is_empty() {
-                    match resource_embed::build_dataset_embedding(ds, &metadata_text, api_key).await {
+                    match resource_embed::build_dataset_embedding(ds, &metadata_text, api_key).await
+                    {
                         Ok(vector) => match db::update_embedding(pool, dataset_id, &vector).await {
                             Ok(()) => embedded += 1,
                             Err(error) => errors.push(format!(
@@ -86,10 +87,7 @@ pub async fn run_sync(pool: &PgPool, req: &SyncRequest) -> Result<SyncResponse> 
                             )),
                         },
                         Err(error) => {
-                            errors.push(format!(
-                                "Embedding error for '{}': {}",
-                                ds.title, error
-                            ));
+                            errors.push(format!("Embedding error for '{}': {}", ds.title, error));
                         }
                     }
                 }

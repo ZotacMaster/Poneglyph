@@ -16,7 +16,11 @@ struct ResourceCandidate {
     format: String,
 }
 
-pub async fn build_dataset_embedding(ds: &SourceDataset, metadata_text: &str, api_key: &str) -> Result<Vec<f32>> {
+pub async fn build_dataset_embedding(
+    ds: &SourceDataset,
+    metadata_text: &str,
+    api_key: &str,
+) -> Result<Vec<f32>> {
     let metadata_vector = embed::embed_text(metadata_text, api_key)
         .await
         .context("Failed to embed dataset metadata")?;
@@ -83,7 +87,11 @@ async fn embed_resource(resource: &ResourceCandidate, api_key: &str) -> Result<O
                 }
                 Ok(_) => Ok(None),
                 Err(error) => {
-                    tracing::warn!("Excel text extraction failed for {}: {}", resource.url, error);
+                    tracing::warn!(
+                        "Excel text extraction failed for {}: {}",
+                        resource.url,
+                        error
+                    );
                     Ok(None)
                 }
             }
@@ -121,7 +129,11 @@ async fn download_file(url: &str) -> Result<Bytes> {
         .with_context(|| format!("Failed to download resource from {url}"))?;
 
     if !resp.status().is_success() {
-        anyhow::bail!("Resource download returned HTTP {} for {}", resp.status(), url);
+        anyhow::bail!(
+            "Resource download returned HTTP {} for {}",
+            resp.status(),
+            url
+        );
     }
 
     if let Some(content_length) = resp.content_length() {
@@ -135,7 +147,10 @@ async fn download_file(url: &str) -> Result<Bytes> {
         }
     }
 
-    let bytes = resp.bytes().await.context("Failed to read resource bytes")?;
+    let bytes = resp
+        .bytes()
+        .await
+        .context("Failed to read resource bytes")?;
     if bytes.len() > config::CONFIG.max_download_bytes {
         anyhow::bail!(
             "Resource is too large after download ({} bytes > {}) for {}",
