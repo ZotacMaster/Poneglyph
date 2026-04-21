@@ -164,6 +164,10 @@ export const sourcesRelations = relations(sources, ({ one, many }) => ({
   datasets: many(datasets),
 }));
 
+export const tagsRelations = relations(tags, ({ many }) => ({
+    datasetTags: many(datasetTags),
+}));
+
 export const datasetsRelations = relations(datasets, ({ one, many }) => ({
   source: one(sources, {
     fields: [datasets.sourceId],
