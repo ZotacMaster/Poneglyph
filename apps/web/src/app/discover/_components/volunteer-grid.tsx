@@ -2,7 +2,7 @@ import { apiClient } from "@/lib/api-client";
 import type { VolunteerListItem, PaginatedResponse } from "@/lib/types";
 import { VolunteerCard } from "./volunteer-card";
 import Link from "next/link";
-import { IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
+import { IconChevronLeft, IconChevronRight, IconAlertTriangle, IconUsers } from "@tabler/icons-react";
 import { Button } from "@Poneglyph/ui/components/button";
 
 interface VolunteerGridProps {
@@ -24,9 +24,14 @@ export async function VolunteerGrid({ city, tags, page = 1, limit = 20 }: Volunt
 
   if (!res.ok) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 text-center">
-        <h3 className="text-lg font-semibold text-foreground">Error loading volunteers</h3>
-        <p className="text-sm text-muted-foreground mt-2">Please try again later.</p>
+      <div className="flex flex-col items-center justify-center py-16 gap-4 text-center rounded-xl border border-border bg-card">
+        <div className="flex items-center justify-center w-12 h-12 rounded-full bg-destructive/10">
+          <IconAlertTriangle className="w-6 h-6 text-destructive" />
+        </div>
+        <div className="space-y-1">
+          <h3 className="text-base font-semibold text-foreground">Failed to load volunteers</h3>
+          <p className="text-sm text-muted-foreground">Something went wrong. Please refresh the page.</p>
+        </div>
       </div>
     );
   }
@@ -40,11 +45,12 @@ export async function VolunteerGrid({ city, tags, page = 1, limit = 20 }: Volunt
 
   if (volunteers.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 text-center border border-dashed border-border rounded-xl bg-card">
-        <h3 className="text-lg font-semibold text-foreground">No volunteers found</h3>
-        <p className="text-sm text-muted-foreground mt-2">
-          Try adjusting your filters to find who you're looking for.
-        </p>
+      <div className="flex flex-col items-center justify-center py-16 gap-3 text-center border border-dashed border-border rounded-xl bg-card">
+        <IconUsers className="w-8 h-8 text-muted-foreground/40" />
+        <div className="space-y-1">
+          <h3 className="text-base font-semibold text-foreground">No volunteers found</h3>
+          <p className="text-sm text-muted-foreground">Try adjusting your filters to find who you're looking for.</p>
+        </div>
       </div>
     );
   }
