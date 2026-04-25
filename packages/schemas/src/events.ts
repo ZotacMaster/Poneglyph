@@ -9,7 +9,7 @@ export const applicationStatusEnum = z.enum(["applied", "shortlisted", "rejected
 export const CreateEventSchema = z.object({
   title: z.string().trim().min(3).max(255),
   description: z.string().trim().min(10),
-  pay: z.coerce.number().int(),
+  pay: z.coerce.number().nonnegative(),
   location: z.string().trim().max(255).optional(),
 });
 

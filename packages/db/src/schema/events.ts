@@ -4,7 +4,7 @@ import {
   text,
   timestamp,
   uuid,
-  integer,
+  numeric,
   varchar,
   index,
   pgEnum,
@@ -45,7 +45,7 @@ export const events = pgTable(
     description: text("description").notNull(),
 
     /** Compensation amount per hour. */
-    pay: integer("pay").notNull(),
+    pay: numeric("pay", { precision: 10, scale: 2, mode: "number" }).notNull(),
 
     /** Free-text location (city, region, remote, etc.) */
     location: varchar("location", { length: 255 }),
