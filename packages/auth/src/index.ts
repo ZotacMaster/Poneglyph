@@ -15,13 +15,17 @@ const schema = {
 export function createAuth() {
   const db = createDb();
 
+  const trustedOrigins = env.CORS_ORIGIN.split(",")
+    .map((o) => o.trim())
+    .filter(Boolean);
+
   return betterAuth({
     appName: "Poneglyph",
     database: drizzleAdapter(db, {
       provider: "pg",
       schema,
     }),
-    trustedOrigins: [env.CORS_ORIGIN || "http://localhost:3001", "http://localhost:3000", "http://localhost:3001"],
+    trustedOrigins,
     secret: env.BETTER_AUTH_SECRET,
     baseURL: env.BETTER_AUTH_URL,
     emailAndPassword: {
