@@ -52,17 +52,32 @@ export function DatasetAttachments({ datasetId, attachments }: Props) {
               </div>
 
               <div className="flex items-center gap-2 shrink-0">
-                <a
-                  href={previewHref}
-                  target={isPdf ? undefined : "_blank"}
-                  rel={isPdf ? undefined : "noopener noreferrer"}
-                >
-                  <Button variant="ghost" size="sm" className="gap-1.5">
-                    <IconEye className="size-3.5" />
-                    Preview
-                  </Button>
-                </a>
-                <DownloadButton datasetId={datasetId} fileIndex={attachment.index} fileName={fileName} />
+               <a
+                   href={previewHref}
+                   target={isPdf ? undefined : "_blank"}
+                   rel={isPdf ? undefined : "noopener noreferrer"}
+                 >
+                   <Button variant="ghost" size="sm" className="gap-1.5">
+                     <IconEye className="size-3.5" />
+                     Preview
+                   </Button>
+                 </a>
+                 <Button
+                   variant="ghost"
+                   size="sm"
+                   className="gap-1.5"
+                   onClick={() => {
+                     const link = document.createElement("a");
+                     link.href = attachment.url;
+                     link.download = fileName;
+                     document.body.appendChild(link);
+                     link.click();
+                     document.body.removeChild(link);
+                   }}
+                 >
+                   <IconDownload className="size-3.5" />
+                   Download
+                 </Button>
               </div>
             </li>
           );

@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import styles from "./verify.module.css";
 import { authClient } from "../../lib/auth-client";
 
-export default function VerifyPage() {
+function VerifyPageContent() {
   const sealRef = useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = useState(false);
   const [verifyStatus, setVerifyStatus] = useState<"pending" | "success" | "error">("pending");
@@ -241,7 +241,15 @@ export default function VerifyPage() {
         <p className={styles.footnote}>
           Wasn't you? <Link href="/contact">Secure your account</Link>.
         </p>
-      </main>
-    </div>
+       </main>
+     </div>
+   );
+}
+
+export default function VerifyPage() {
+  return (
+    <Suspense fallback={<div className={styles.verifyWrapper}><div className={styles.stage}><p>Loading...</p></div></div>}>
+      <VerifyPageContent />
+    </Suspense>
   );
 }
