@@ -21,6 +21,11 @@ export function AuthForm({ initialTab }: { initialTab: "signin" | "signup" }) {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
+  // Debug: Log auth client config on mount
+  if (typeof window !== "undefined") {
+    console.log("[AuthForm] authClient.baseURL:", authClient.baseURL);
+  }
+
   // Sign-in fields
   const [siEmail, setSiEmail] = useState("");
   const [siPwd, setSiPwd] = useState("");
@@ -86,43 +91,58 @@ export function AuthForm({ initialTab }: { initialTab: "signin" | "signup" }) {
 
     try {
       if (tab === "signin") {
+        console.log("[AuthForm] Attempting sign-in to:", authClient.baseURL);
         await authClient.signIn.email(
           { email: siEmail, password: siPwd, rememberMe: siRemember },
           {
-            onRequest: () => setLoading(true),
+            onRequest: () => {
+              console.log("[AuthForm] onRequest called");
+              setLoading(true);
+            },
             onSuccess: () => {
+              console.log("[AuthForm] onSuccess - login successful!");
               setSuccess(true);
               setTimeout(() => {
+                console.log("[AuthForm] Redirecting to /dashboard");
                 router.push("/dashboard");
                 router.refresh();
               }, 500);
             },
             onError: (ctx) => {
+              console.error("[AuthForm] onError - login failed:", ctx.error);
               setLoading(false);
               alert(ctx.error.message || "Invalid email or password");
             },
           },
         );
       } else {
+        console.log("[AuthForm] Attempting sign-up to:", authClient.baseURL);
         await authClient.signUp.email(
           { email: suEmail, password: suPwd, name: `${suFirst} ${suLast}`.trim() },
           {
-            onRequest: () => setLoading(true),
+            onRequest: () => {
+              console.log("[AuthForm] onRequest called");
+              setLoading(true);
+            },
             onSuccess: () => {
+              console.log("[AuthForm] onSuccess - signup successful!");
               setSuccess(true);
               setTimeout(() => {
+                console.log("[AuthForm] Redirecting to /dashboard");
                 router.push("/dashboard");
                 router.refresh();
               }, 1200);
             },
             onError: (ctx) => {
+              console.error("[AuthForm] onError - signup failed:", ctx.error);
               setLoading(false);
               alert(ctx.error.message || "Failed to create account");
             },
           },
         );
       }
-    } catch {
+    } catch (error) {
+      console.error("[AuthForm] Caught error:", error);
       setLoading(false);
       alert("Something went wrong. Please try again.");
     }
