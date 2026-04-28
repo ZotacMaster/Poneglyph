@@ -59,7 +59,9 @@ export default async function PDFDownloadPage({ params, searchParams }: Props) {
               Browse More Datasets
             </Button>
           </Link>
-          <Link href={`/pdf/${id}?src=${encodeURIComponent(src)}&title=${encodeURIComponent(title ?? "")}`}>
+          <Link
+            href={`/pdf/${id}?src=${encodeURIComponent(src)}&title=${encodeURIComponent(title ?? "")}`}
+          >
             <Button variant="outline" size="sm">
               View Preview
             </Button>

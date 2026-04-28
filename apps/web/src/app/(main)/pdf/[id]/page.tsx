@@ -51,11 +51,7 @@ export default async function PDFViewerPage({ params, searchParams }: Props) {
       </div>
 
       <div className="flex-1 overflow-hidden">
-        <iframe
-          src={decodedSrc}
-          className="w-full h-full border-0"
-          title={displayTitle}
-        />
+        <iframe src={decodedSrc} className="w-full h-full border-0" title={displayTitle} />
       </div>
     </div>
   );
